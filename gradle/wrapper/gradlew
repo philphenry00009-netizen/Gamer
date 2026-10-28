@@ -1,13 +1,36 @@
-#!/usr/bin/env sh
-# This is a standard Gradle wrapper script.
+#!/bin/sh
+# This is a simplified Gradle wrapper script designed for CI.
+
 set -e
-GRADLE_VERSION=8.2
-DIST_URL="https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip"
-# Fetch gradle if missing
-if [ ! -d "gradle/wrapper/dists" ]; then
-  mkdir -p gradle/wrapper/dists
+
+# Default Gradle version (matches the properties file)
+GRADLE_VERSION="8.2"
+GRADLE_ZIP_URL="https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip"
+GRADLE_HOME="gradle/wrapper/dists/gradle-$GRADLE_VERSION"
+GRADLE_WRAPPER_DIR="gradle/wrapper"
+
+echo "Checking for Gradle distribution..."
+
+if [ ! -d "$GRADLE_HOME" ]; then
+    echo "Downloading Gradle $GRADLE_VERSION..."
+    mkdir -p "$GRADLE_WRAPPER_DIR"
+    if ! curl -L "$GRADLE_ZIP_URL" -o "/tmp/gradle.zip"; then
+        echo "Error downloading Gradle."
+        exit 1
+    fi
+    unzip -q "/tmp/gradle.zip" -d "$GRADLE_WRAPPER_DIR"
+    echo "Gradle $GRADLE_VERSION setup complete."
+else
+    echo "Gradle $GRADLE_VERSION already exists."
 fi
-echo "Gradle Wrapper initialized."
-# In a real environment, this script runs the build. 
-# GitHub will use the provided distribution URL to download everything else.
-./gradlew --version || echo "Build setup complete."
+
+# Determine project directory: git root
+PROJECT_DIR=$(pwd)
+
+# Ensure we are in the project directory where gradle.properties exists
+if [ ! -f "$PROJECT_DIR/gradle.properties" ]; then
+    echo "Warning: gradle.properties not found in project root."
+fi
+
+# Run Gradle
+exec "$GRADLE_HOME/bin/gradle" "$@"
