@@ -1,2 +1,2 @@
 @echo off
-echo Gradle Wrapper initialized.
+echo Gradle Wrapper script (Windows).
